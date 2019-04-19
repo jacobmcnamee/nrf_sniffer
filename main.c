@@ -5,7 +5,9 @@
 #include "crc.h"
 #include "SEGGER_RTT.h"
 
-#define CHANNEL 90
+//#define CHANNEL 90
+//#define CHANNEL 65
+#define CHANNEL 0
 
 #define RADIO_BUFFER_SIZE 264
 #define RADIO_RINGBUF_ELEMENTS_COUNT 32
@@ -25,7 +27,7 @@ typedef struct {
   uint32_t read_index;
 } radio_ringbuf_t;
 
-static radio_ringbuf_t radio_ringbuf = { 0 };
+static radio_ringbuf_t radio_ringbuf = { .write_index = 0, .read_index = 0 };
 
 static uint32_t rx_count = 0;
 static uint32_t overflow_count = 0;
@@ -44,7 +46,8 @@ typedef struct
 
 __ALIGN(4) static nrf_esb_address_t m_esb_addr = {
   //.base_addr_p0       = { 0xE7, 0xE7, 0xE7, 0xE7 },
-  .base_addr_p0       = { 0xE7, 0x83, 0x9A, 0x70 },
+  //.base_addr_p0       = { 0xE7, 0x83, 0x9A, 0x70 },
+  .base_addr_p0       = { 0xE7, 0x12, 0xEE, 0x31 },
   .base_addr_p1       = { 0xC2, 0xC2, 0xC2, 0xC2 },
   .pipe_prefixes      = { 0xE7, 0xC2, 0xC3, 0xC4, 0xC5, 0xC6, 0xC7, 0xC8 },
   .addr_length        = 5,
@@ -79,7 +82,7 @@ static void radio_configure(void)
   NRF_RADIO->MODECNF0  = (NRF_RADIO->MODECNF0 & ~RADIO_MODECNF0_RU_Msk) |
                          (RADIO_MODECNF0_RU_Fast << RADIO_MODECNF0_RU_Pos);
 
-  NRF_RADIO->PCNF0 = (0 << RADIO_PCNF0_S0LEN_Pos) |
+  NRF_RADIO->PCNF0 = (1 << RADIO_PCNF0_S0LEN_Pos) |
                      (8 << RADIO_PCNF0_LFLEN_Pos) |
                      (3 << RADIO_PCNF0_S1LEN_Pos) ;
 
@@ -146,7 +149,7 @@ static void timer_start(void)
 
 static void output_element(const radio_ringbuf_element_t *e)
 {
-  uint32_t buffer_length = 2 + e->buffer[0];
+  uint32_t buffer_length = 3 + e->buffer[1];
 
 #ifdef TEXT_OUTPUT
   SEGGER_RTT_printf(0, "%6u: index = %u, length = %u, rssi = -%udBm\r\n",

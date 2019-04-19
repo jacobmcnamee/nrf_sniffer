@@ -18,7 +18,10 @@ HEADER_SIZE =               8
 LENGTH_MAX =                512
 
 def output_fields(fields):
-    print(fields)
+    print("timestamp: {}, rx_count: {}, rssi: {}, length: {}".format(
+        fields["timestamp"], fields["rx_count"], fields["rssi"], fields["data"][1]))
+    print(''.join('{:02x}'.format(x) for x in fields["data"]))
+    #print(fields)
     sys.stdout.flush()
 
 def payload_decode(payload):
@@ -91,7 +94,8 @@ def main(argv):
             if data:
                 decoder_process(decoder, bytes(data))
             else:
-                time.sleep(0.001)
+                #time.sleep(0.001)
+                pass
     except Exception:
         raise
 
